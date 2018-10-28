@@ -22,8 +22,8 @@ if [[ $1 == "--startup" ]]; then
         ''
         '[Service]'
         'Type=oneshot'
+        "Environment=DISPLAY=$DISPLAY"
         "ExecStart=/usr/bin/bash -c '/usr/bin/nvidia-smi -pl 140; until /usr/bin/nvidia-settings -a GPUGraphicsClockOffsetAllPerformanceLevels=${coreOffset} -a GPUMemoryTransferRateOffsetAllPerformanceLevels=${memoryOffset}; do sleep 5; done'"
-        "Environment=DISPLAY=${DISPLAY}"
         ''
         '[Install]'
         'WantedBy=graphical.target'
