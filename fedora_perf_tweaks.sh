@@ -195,6 +195,37 @@ nomouseaccel() {
     fi
 }
 
+cpugov() {
+    echo "Enabling CPU performance governor"
+
+    # Install kernel-tools if needed
+    if [[ $(dnf list installed | grep "kernel-tools" | wc -l) -lt 1 ]]; then
+        dnf install kernel-tools
+    fi
+
+    # Create systemd service to set at boot
+    local UNITFILE='/etc/systemd/system/cpugov.service'
+    declare -a CPUGOV=(
+        '[Unit]'
+        'Description=Set CPU governor'
+        ''
+        '[Service]'
+        'Type=oneshot'
+        'ExecStart=/usr/bin/cpupower -c all frequency-set -g performance'
+        ''
+        '[Install]'
+        'WantedBy=multi-user.target'
+    )
+
+    if create_file $UNITFILE; then
+        printf "%s\n" "${CPUGOV[@]}" > $UNITFILE
+        printf "\tWrote file $UNITFILE\n"
+
+        systemctl daemon-reload
+        systemctl enable cpugov --now
+    fi
+}
+
 backup
 swappiness
 spectre
@@ -205,6 +236,7 @@ noatime
 sysrq
 pulseaudio
 nomouseaccel
+cpugov
 if $GRUBCHANGED; then
     grub_make_config
 fi
