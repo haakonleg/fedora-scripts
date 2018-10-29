@@ -54,6 +54,7 @@ declare -a FLATPAKS (
     'com.jgraph.drawio.desktop/x86_64/stable'
     'org.DolphinEmu.dolphin-emu/x86_64/stable'
     'org.libretro.RetroArch/x86_64/stable'
+    'com.spotify.Client'
 )
 
 dnf install ${PACKAGES[@]}
