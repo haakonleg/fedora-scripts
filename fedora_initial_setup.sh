@@ -47,6 +47,7 @@ declare -a PACKAGES (
     'steam'
     'unrar'
     'papirus-icon-theme'
+    'golang'
 )
 
 declare -a FLATPAKS (
