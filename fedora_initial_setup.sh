@@ -48,6 +48,7 @@ declare -a PACKAGES (
     'unrar'
     'papirus-icon-theme'
     'golang'
+    'thefuck'
 )
 
 declare -a FLATPAKS (

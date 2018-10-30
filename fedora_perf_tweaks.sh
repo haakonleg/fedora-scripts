@@ -226,6 +226,52 @@ cpugov() {
     fi
 }
 
+fonts() {
+    echo "Setting font configuration"
+
+    sudo -u $ORIGUSER gsettings set org.gnome.settings-daemon.plugins.xsettings antialiasing rgba
+    sudo -u $ORIGUSER gsettings set org.gnome.settings-daemon.plugins.xsettings hinting none
+
+    declare -a FONTSCONFIG=(
+        '<?xml version="1.0"?>'
+        '<!DOCTYPE fontconfig SYSTEM "fonts.dtd">'
+        '<fontconfig>'
+        '  <match target="font">'
+        '    <edit name="antialias" mode="assign">'
+        '      <bool>true</bool>'
+        '    </edit>'
+        '  </match>'
+        '  <match target="font">'
+        '    <edit name="hinting" mode="assign">'
+        '      <bool>true</bool>'
+        '    </edit>'
+        '  </match>'
+        '  <match target="font">'
+        '    <edit name="autohint" mode="assign">'
+        '      <bool>false</bool>'
+        '    </edit>'
+        '  </match>'
+        '  <match target="font">'
+        '    <edit name="hintstyle" mode="assign">'
+        '      <const>hintnone</const>'
+        '    </edit>'
+        '  </match>'
+        '  <match target="font">'
+        '    <edit name="rgba" mode="assign">'
+        '      <const>rgb</const>'
+        '    </edit>'
+        '  </match>'
+        '  <match target="font">'
+        '    <edit name="lcdfilter" mode="assign">'
+        '      <const>lcddefault</const>'
+        '    </edit>'
+        '  </match>'
+        '</fontconfig>'
+    )
+
+    printf "%s\n" "${FONTSCONFIG[@]}" > "/etc/fonts/local.conf"
+}
+
 backup
 swappiness
 spectre
@@ -237,6 +283,7 @@ sysrq
 pulseaudio
 nomouseaccel
 cpugov
+fonts
 if $GRUBCHANGED; then
     grub_make_config
 fi
