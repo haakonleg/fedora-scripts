@@ -6,18 +6,25 @@ if [[ $UID != 0 ]]; then
 fi
 
 # Config
-GRUBCONFIG="/etc/default/grub"
-GRUBEFI="/boot/efi/EFI/fedora/grub.cfg"
-FSTAB="/etc/fstab"
+BACKUPDIR="perf_backup"
 SWAPPINESS_VAL=1
 
 # Global vars
+GRUBCONFIG="/etc/default/grub"
+GRUBEFI="/boot/efi/EFI/fedora/grub.cfg"
+FSTAB="/etc/fstab"
+FONTCONF="/etc/fonts/local.conf"
+
 ORIGUSER=$(logname)
 GRUBCHANGED=false
 
 backup() {
-    sudo -u $ORIGUSER cp $GRUBCONFIG grub.bak
-    sudo -u $ORIGUSER cp $FSTAB fstab.bak
+    sudo -u $ORIGUSER mkdir -p "$BACKUPDIR"
+    sudo -u $ORIGUSER cp -f \
+        "$GRUBCONFIG" \
+        "$FSTAB" \
+        "$FONTCONF" \
+        "$BACKUPDIR/"
 }
 
 # Adds kernel paramenter $1 to /etc/default/grub
@@ -35,36 +42,20 @@ add_kernel_param() {
     done
 }
 
-# Generate new grub.cfg
-grub_make_config() {
-    echo "Generating new grub.cfg"
-
-    grub2-mkconfig -o $GRUBEFI
-}
-
-# Creates the file $1 with content of string array $2 if it does not exist
-create_file() {
+# Creates the file $1 if it does not exist and returns true
+file_exists() {
     if [[ -f $1 ]]; then
         printf "\t$1 already exists, skipping\n"
         return 1
     fi
-
-    touch $1
-    return 0
 }
 
 # Set swappiness value
 swappiness() {
     echo "Setting swappiness value"
 
-    local CURR=$(cat /proc/sys/vm/swappiness)
-    if [[ CURR -eq SWAPPINESS_VAL ]]; then
-        printf "\tSwappiness already set to $SWAPPINESS_VAL, skipping\n"
-        return
-    fi
-
     local SWAPPINESSFILE="/etc/sysctl.d/swappiness.conf"
-    if create_file $SWAPPINESSFILE; then
+    if file_exists $SWAPPINESSFILE; then
         echo "vm.swappiness=$SWAPPINESS_VAL" > $SWAPPINESSFILE
         printf "\tWrote file $SWAPPINESSFILE\n"
     fi
@@ -85,7 +76,7 @@ blk_mq() {
         'ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="bfq"'
     )
 
-    if create_file $UDEVFILE; then
+    if file_exists $UDEVFILE; then
         printf "%s\n" "${UDEVRULES[@]}" > $UDEVFILE
         printf "\tWrote file $UDEVFILE\n"
     fi
@@ -107,7 +98,7 @@ spectre() {
     add_kernel_param "nopti" "nospectre_v2" "nospec_store_bypass_disable" "l1tf=off" "no_stf_barrier"
 
     # Prevent microcode from updating
-    if [[ $(dnf list installed | grep "microcode_ctl" | wc -l) -gt 0 ]]; then
+    if [[ $(command -v "microcode_ctl") ]]; then
         printf "\tRemoving microcode_ctl\n"
         dnf remove microcode_ctl
         dracut --force
@@ -137,7 +128,7 @@ sysrq() {
     echo "Enabling sysrq"
 
     local SYSRQFILE='/etc/sysctl.d/sysrq.conf'
-    if create_file $SYSRQFILE; then
+    if file_exists $SYSRQFILE; then
         printf "%s\n" "kernel.sysrq = 1" > $SYSRQFILE
         printf "\t Wrote file $SYSRQFILE\n"
     fi
@@ -189,7 +180,7 @@ nomouseaccel() {
         'EndSection'
     )
 
-    if create_file $MOUSEACCELFILE; then
+    if file_exists $MOUSEACCELFILE; then
         printf "%s\n" "${MOUSEACCELOPTS[@]}" > $MOUSEACCELFILE
         printf "\tWrote file $MOUSEACCELFILE\n"
     fi
@@ -199,7 +190,7 @@ cpugov() {
     echo "Enabling CPU performance governor"
 
     # Install kernel-tools if needed
-    if [[ $(dnf list installed | grep "kernel-tools" | wc -l) -lt 1 ]]; then
+    if [[ ! $(command -v "cpupower") ]]; then
         dnf install kernel-tools
     fi
 
@@ -217,7 +208,7 @@ cpugov() {
         'WantedBy=multi-user.target'
     )
 
-    if create_file $UNITFILE; then
+    if file_exists $UNITFILE; then
         printf "%s\n" "${CPUGOV[@]}" > $UNITFILE
         printf "\tWrote file $UNITFILE\n"
 
@@ -269,7 +260,7 @@ fonts() {
         '</fontconfig>'
     )
 
-    printf "%s\n" "${FONTSCONFIG[@]}" > "/etc/fonts/local.conf"
+    printf "%s\n" "${FONTSCONFIG[@]}" > "$FONTCONF"
 }
 
 backup
@@ -284,6 +275,9 @@ pulseaudio
 nomouseaccel
 cpugov
 fonts
+
+# If grub config changed, generate new
 if $GRUBCHANGED; then
-    grub_make_config
+    echo "Generating new grub.cfg"
+    grub2-mkconfig -o $GRUBEFI
 fi

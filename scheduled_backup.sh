@@ -1,14 +1,14 @@
 #!/bin/bash
 
-SCRIPT="backup.sh"
-SD_DIR="/etc/systemd/system"
-UNIT_SERVICE="backup.service"
-UNIT_TIMER="backup.timer"
-
 if [[ $UID != 0 ]]; then
     echo "Script must be run as root"
     exit 1
 fi
+
+SCRIPT="backup.sh"
+SD_DIR="/etc/systemd/system"
+UNIT_SERVICE="backup.service"
+UNIT_TIMER="backup.timer"
 
 echo "Destination to place backup file:"
 read DEST

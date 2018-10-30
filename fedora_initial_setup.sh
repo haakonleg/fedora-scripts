@@ -9,8 +9,6 @@ fi
 dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 # Enable negativo17 Nvidia repo
 dnf config-manager --add-repo=https://negativo17.org/repos/fedora-nvidia.repo
-# Enable Lutris repo
-dnf config-manager --add-repo https://download.opensuse.org/repositories/home:strycore/Fedora_$(rpm -E %fedora)/home:strycore.repo
 # Enable vscode repo
 rpm --import https://packages.microsoft.com/keys/microsoft.asc
 sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
@@ -24,34 +22,46 @@ dnf makecache
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 # Packages to install
-declare -a PACKAGES (
+declare -a PACKAGES=(
+# Apps
     'calibre'
-    'code'
     'discord'
     'gnome-tweaks'
-    'google-roboto-fonts'
     'keepassxc'
     'lm_sensors'
-    'lutris'
-    'mpv'
     'nano'
+    'p7zip'
+    'qbittorrent'
+    'unrar'
+    'thefuck'
+# Not working on fedora 29 yet, missing dependencies
+#    'mpv'
+
+# Dev
+    'code'
+    'qt-creator'
+    'qt5-devel'
+    'golang'
+
+# Fonts/icons etc
+    'google-roboto-fonts'
+    'papirus-icon-theme'
+
+# Nvidia and gaming
     'kernel-devel'
     'nvidia-driver'
     'nvidia-driver-cuda'
     'nvidia-settings'
+    'nvidia-driver-libs.i686'
     'akmod-nvidia'
-    'p7zip'
-    'qbittorrent'
-    'qt-creator'
-    'qt5-devel'
+    'lutris'
+    'wine'
     'steam'
-    'unrar'
-    'papirus-icon-theme'
-    'golang'
-    'thefuck'
+
 )
 
-declare -a FLATPAKS (
+# Flatpaks to install
+declare -a FLATPAKS=(
     'com.google.AndroidStudio/x86_64/stable'
     'com.jgraph.drawio.desktop/x86_64/stable'
     'org.DolphinEmu.dolphin-emu/x86_64/stable'
@@ -60,4 +70,8 @@ declare -a FLATPAKS (
 )
 
 dnf install ${PACKAGES[@]}
-flatpak install ${FLATPAKS[@]}
+flatpak install flathub ${FLATPAKS[@]}
+
+# After nvidia driver install
+grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
+dracut --force
