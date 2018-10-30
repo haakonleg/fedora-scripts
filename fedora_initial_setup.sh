@@ -34,8 +34,7 @@ declare -a PACKAGES=(
     'qbittorrent'
     'unrar'
     'thefuck'
-# Not working on fedora 29 yet, missing dependencies
-#    'mpv'
+    'mpv'
 
 # Dev
     'code'

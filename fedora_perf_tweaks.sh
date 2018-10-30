@@ -98,7 +98,7 @@ spectre() {
     add_kernel_param "nopti" "nospectre_v2" "nospec_store_bypass_disable" "l1tf=off" "no_stf_barrier"
 
     # Prevent microcode from updating
-    if [[ $(command -v "microcode_ctl") ]]; then
+    if [[ $(dnf list installed | grep "microcode_ctl") ]]; then
         printf "\tRemoving microcode_ctl\n"
         dnf remove microcode_ctl
         dracut --force
@@ -141,15 +141,13 @@ pulseaudio() {
     local PADIR="/home/${ORIGUSER}/.config/pulse"
     local PAFILE="${PADIR}/daemon.conf"
 
-    if [[ ! -d $PADIR ]]; then
-        mkdir $PADIR
-    fi
+    mkdir -p $PADIR
 
     if [[ ! -f $PAFILE ]]; then
         sudo -u $ORIGUSER touch $PAFILE
 
         declare -a PAOPTS=(
-            'resample-method = speex-float-5'
+            'resample-method = soxr-vhq'
             'avoid-resampling = true'
             'flat-volumes = no'
             'default-sample-format = s16le'
@@ -168,7 +166,7 @@ pulseaudio() {
 nomouseaccel() {
     echo "Disabling mouse acceleration"
 
-    sudo -u $ORIGUSER gsettings set org.gnome.desktop.peripherals.mouse accel-profile flat
+    sudo -u $ORIGUSER bash -c  'gsettings set org.gnome.desktop.peripherals.mouse accel-profile flat'
 
     local MOUSEACCELFILE='/etc/X11/xorg.conf.d/50-mouse-acceleration.conf'
     declare -a MOUSEACCELOPTS=(
@@ -220,8 +218,8 @@ cpugov() {
 fonts() {
     echo "Setting font configuration"
 
-    sudo -u $ORIGUSER gsettings set org.gnome.settings-daemon.plugins.xsettings antialiasing rgba
-    sudo -u $ORIGUSER gsettings set org.gnome.settings-daemon.plugins.xsettings hinting none
+    sudo -u $ORIGUSER bash -c 'gsettings set org.gnome.settings-daemon.plugins.xsettings antialiasing rgba'
+    sudo -u $ORIGUSER bash -c 'gsettings set org.gnome.settings-daemon.plugins.xsettings hinting none'
 
     declare -a FONTSCONFIG=(
         '<?xml version="1.0"?>'

@@ -30,6 +30,9 @@ KXDIR="/home/$USER/.config/keepassxc"
 FFBAK="$BACKUPDIR/firefox"
 FFDIR="/home/$USER/.mozilla/firefox"
 
+MPVBAK="$BACKUPDIR/mpv"
+MPVDIR="/home/$USER/.config/mpv"
+
 vscode_backup() {
     if [[ -d $VSCODE ]]; then
         echo "Backing up vscode..."
@@ -157,6 +160,24 @@ firefox_backup() {
     fi
 }
 
+mpv_backup() {
+    if [[ -f "$MPVDIR/mpv.conf" ]]; then
+        echo "Backing up mpv..."
+
+        mkdir -p "$MPVBAK"
+        cp "$MPVDIR/mpv.conf" "$MPVBAK/"
+    fi
+}
+
+mpv_restore() {
+    if [[ -d "$MPVBAK" ]] && [[ $(command -v "mpv") ]]; then
+        echo "Restoring mpv..."
+
+        mkdir -p "$MPVDIR"
+        cp -f "$MPVBAK/mpv.conf" "$MPVDIR/"
+    fi
+}
+
 case "$1" in
     "backup")
         rm -rf "$BACKUPDIR"
@@ -168,6 +189,7 @@ case "$1" in
         qbittorent_backup
         keepassxc_backup
         firefox_backup
+        mpv_backup
 
         echo "Compressing..."
         tar zcf "$BACKUPDIR.tar.gz" "$BACKUPDIR"
@@ -187,6 +209,7 @@ case "$1" in
         lutris_restore
         qbittorrent_restore
         keepassxc_restore
+        mpv_restore
         ;;
     *)
         echo "Usage: $0 {backup|restore}"
