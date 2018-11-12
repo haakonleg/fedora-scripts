@@ -20,7 +20,7 @@ fi
 
 echo '#!/bin/bash
 # Delete old backups, keep the last 5 days
-find $DEST -maxdepth 1 -type f -name "linux_backup_*.tar.gz" | sort -n | head -n -5 | while read -r oldfile; do
+find $DEST -maxdepth 1 -type f -name "linux_backup_*.tar.xz" | sort -n | head -n -4 | while read -r oldfile; do
     echo "Deleting old backup $oldfile"
     rm -rf $oldfile
 done
@@ -28,15 +28,17 @@ done
 HOMEDIR="/home/$USER"
 TIME=$(date +"%m%d%y")
 
-tar cpzfP "$DEST/linux_backup_$TIME.tar.gz" \
+tar cfP - \
     --exclude="$HOMEDIR/.cache" \
     --exclude="$HOMEDIR/.var" \
     --exclude="$HOMEDIR/snap" \
     --exclude="$HOMEDIR/Android" \
+    --exclude="$HOMEDIR/Downloads" \
     "$HOMEDIR/" \
-    "/etc/"
+    "/etc/" \
+    | 7za a -si -txz -mx=9 "$DEST/linux_backup_$TIME.tar.xz"
 
-chown $USER:$USER "$DEST/linux_backup_$TIME.tar.gz"' > "/$SCRIPT"
+chown $USER:$USER "$DEST/linux_backup_$TIME.tar.xz"' > "/$SCRIPT"
 chmod +x "/$SCRIPT"
 
 # Create systemd service

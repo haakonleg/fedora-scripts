@@ -8,208 +8,222 @@ fi
 # Global vars
 BACKUPDIR='backup'
 
-VSBAK="$BACKUPDIR/vscode"
-VSCODE="/home/$USER/.config/Code"
+vscode() {
+    local backupDir="$BACKUPDIR/vscode"
+    local vscode="/home/$USER/.config/Code"
 
-GNOMEBAK="$BACKUPDIR/gnome"
-
-SSHBAK="$BACKUPDIR/ssh"
-SSH="/home/$USER/.ssh"
-
-LUTRISBAK="$BACKUPDIR/lutris"
-LUTRISDIR="/home/$USER/.local/share/lutris"
-LUTRISCONF="/home/$USER/.config/lutris"
-
-QBBAK="$BACKUPDIR/qbittorrent"
-QBDIR="/home/$USER/.local/share/data/qBittorrent/BT_backup"
-QBCONF="/home/$USER/.config/qBittorrent"
-
-KXBAK="$BACKUPDIR/keepassxc"
-KXDIR="/home/$USER/.config/keepassxc"
-
-FFBAK="$BACKUPDIR/firefox"
-FFDIR="/home/$USER/.mozilla/firefox"
-
-MPVBAK="$BACKUPDIR/mpv"
-MPVDIR="/home/$USER/.config/mpv"
-
-vscode_backup() {
-    if [[ -d $VSCODE ]]; then
+    if [[ $1 -eq "backup" ]] && [[ -d $vscode ]]; then
         echo "Backing up vscode..."
 
-        mkdir -p "$VSBAK"
+        mkdir -p "$backupDir"
         # Backup config
-        cp "$VSCODE/User/settings.json" "$VSBAK"
+        cp "$vscode/User/settings.json" "$backupDir"
         # Backup extensions
-        echo "$(code --list-extensions)" > "$VSBAK/extensions"
-    fi
-}
-
-vscode_restore() {
-    if [[ -d "$VSBAK" ]] && [[ $(command -v "code") ]]; then
+        echo "$(code --list-extensions)" > "$backupDir/extensions"
+    elif [[ $1 -eq "restore" ]] && [[ -d "$backupDir" ]] && [[ $(command -v "code") ]]; then
         echo "Restoring vscode..."
 
         # Restore config
-        cp -f "$VSBAK/settings.json" "$VSCODE/User/"
+        cp -f "$backupDir/settings.json" "$vscode/User/"
         # Restore extensions
         while read -r extension; do
             code --install-extension $extension
-        done < "$VSBAK/extensions"
+        done < "$backupDir/extensions"
     fi
 }
 
-gnome_backup() {
-    echo "Backing up gnome..."
+gnome() {
+    local backupDir="$BACKUPDIR/gnome"
 
-    mkdir -p "$GNOMEBAK"
-    # Backup gnome config
-    echo "$(dconf dump /)" > "$GNOMEBAK/gnome"
-    # Backup extensions
-    cp -r "/home/$USER/.local/share/gnome-shell/extensions" "$GNOMEBAK"
+    if [[ $1 -eq "backup" ]]; then
+        echo "Backing up gnome..."
+
+        mkdir -p "$backupDir"
+        # Backup gnome config
+        echo "$(dconf dump /)" > "$backupDir/gnome"
+        # Backup extensions
+        cp -r "/home/$USER/.local/share/gnome-shell/extensions" "$backupDir"
+    fi
 }
 
-ssh_backup() {
-    if [[ -d $SSH ]]; then
+ssh() {
+    local backupDir="$BACKUPDIR/ssh"
+    local sshDir="/home/$USER/.ssh"
+
+    if [[ $1 -eq "backup" ]] && [[ -d $sshDir ]]; then
         echo "Backing up ssh..."
 
-        mkdir -p "$SSHBAK"
-        cp $SSH/id_* "$SSHBAK"
+        mkdir -p "$backupDir"
+        cp $sshDir/id_* "$backupDir"
+    elif [[ $1 -eq "restore" ]] && [[ -d "$backupDir" ]]; then
+        echo "Restoring ssh..."
+
+        mkdir -p "$sshDir"
+        cp -rf $backupDir/. "$sshDir/"
     fi
 }
 
-ssh_restore() {
-    echo "Restoring ssh..."
-    if [[ -d "$SSHBAK" ]]; then
-        mkdir -p "$SSH"
-        cp -rf $SSHBAK/. "$SSH/"
-    fi
-}
+lutris() {
+    local backupDir="$BACKUPDIR/lutris"
+    local lutrisDir="/home/$USER/.local/share/lutris"
+    local confDir="/home/$USER/.config/lutris"
 
-lutris_backup() {
-    if [[ -d $LUTRISDIR ]]; then
+    if [[ $1 -eq "backup" ]] && [[ -d $lutrisDir ]]; then
         echo "Backing up lutris..."
 
-        mkdir -p "$LUTRISBAK/local"
-        mkdir -p "$LUTRISBAK/conf"
+        mkdir -p "$backupDir/local"
+        mkdir -p "$backupDir/conf"
 
-        cp -r "$LUTRISDIR/pga.db" "$LUTRISDIR/runners" "$LUTRISDIR/banners" "$LUTRISBAK/local"
-        cp -r "$LUTRISCONF/system.yml" "$LUTRISCONF/lutris.conf" "$LUTRISCONF/games" "$LUTRISCONF/runners" "$LUTRISBAK/conf"
-    fi
-}
-
-lutris_restore() {
-    if [[ -d "$LUTRISBAK" ]] && [[ $(command -v "lutris") ]]; then
+        cp -r "$lutrisDir/pga.db" "$lutrisDir/runners" "$lutrisDir/banners" "$backupDir/local"
+        cp -r "$confDir/system.yml" "$confDir/lutris.conf" "$confDir/games" "$confDir/runners" "$backupDir/conf"
+    elif [[ $1 -eq "restore" ]] && [[ -d "$backupDir" ]] && [[ $(command -v "lutris") ]]; then
         echo "Restoring lutris..."
 
-        mkdir -p "$LUTRISDIR"
-        mkdir -p "$LUTRISCONF"
+        mkdir -p "$lutrisDir"
+        mkdir -p "$confDir"
 
-        cp -rf $LUTRISBAK/local/. "$LUTRISDIR/"
-        cp -rf $LUTRISBAK/conf/. "$LUTRISCONF/"
+        cp -rf $backupDir/local/. "$lutrisDir/"
+        cp -rf $backupDir/conf/. "$confDir/"
     fi
 }
 
-qbittorent_backup() {
-    if [[ -d $QBDIR ]]; then
+qbittorent() {
+    local backupDir="$BACKUPDIR/qbittorrent"
+    local qbDir="/home/$USER/.local/share/data/qBittorrent/BT_backup"
+    local qbConf="/home/$USER/.config/qBittorrent"
+
+    if [[ $1 -eq "backup" ]] && [[ -d $qbDir ]]; then
         echo "Backing up qbittorrent..."
 
-        mkdir -p "$QBBAK"
-        cp $QBDIR/*.torrent $QBDIR/*.fastresume "$QBCONF/qBittorrent.conf" "$QBCONF/qBittorrent-data.conf" "$QBBAK"
-    fi
-}
-
-qbittorrent_restore() {
-     if [[ -d "$QBBAK" ]] && [[ $(command -v "qbittorrent") ]]; then
+        mkdir -p "$backupDir"
+        cp $qbDir/*.torrent $qbDir/*.fastresume "$qbConf/qBittorrent.conf" "$qbConf/qBittorrent-data.conf" "$backupDir"
+    elif [[ $1 -eq "restore" ]] && [[ -d "$backupDir" ]] && [[ $(command -v "qbittorrent") ]]; then
         echo "Restoring qbittorrent..."
 
-        mkdir -p "$QBDIR"
-        mkdir -p "$QBCONF"
+        mkdir -p "$qbDir"
+        mkdir -p "$qbConf"
 
-        cp $QBBAK/*.torrent $QBBAK/*.fastresume "$QBDIR"
-        cp -f "$QBBAK/qBittorrent.conf" "$QBBAK/qBittorrent-data.conf" "$QBCONF"
-     fi
+        cp $backupDir/*.torrent $backupDir/*.fastresume "$qbDir"
+        cp -f "$backupDir/qBittorrent.conf" "$backupDir/qBittorrent-data.conf" "$qbConf"
+    fi
 }
 
-keepassxc_backup() {
-    if [[ -d $KXDIR ]]; then
+keepassxc() {
+    local backupDir="$BACKUPDIR/keepassxc"
+    local kxDir="/home/$USER/.config/keepassxc"
+
+    if [[ $1 -eq "backup" ]] && [[ -d $kxDir ]]; then
         echo "Backing up keepassxc..."
 
-        mkdir -p "$KXBAK"
-        cp "$KXDIR/keepassxc.ini" "$KXBAK"
-    fi
-}
-
-keepassxc_restore() {
-    if [[ -d "$KXBAK" ]] && [[ $(command -v "keepassxc") ]]; then
+        mkdir -p "$backupDir"
+        cp "$kxDir/keepassxc.ini" "$backupDir"
+    elif [[ $1 -eq "restore" ]] && [[ -d "$backupDir" ]] && [[ $(command -v "keepassxc") ]]; then
         echo "Restoring keepassxc..."
 
-        mkdir -p "$KXDIR"
-        cp -f "$KXBAK/keepassxc.ini" "$KXDIR/"
+        mkdir -p "$kxDir"
+        cp -f "$backupDir/keepassxc.ini" "$kxDir/"
     fi
 }
 
-firefox_backup() {
+firefox() {
+    local backupDir="$BACKUPDIR/firefox"
+    local ffDir="/home/$USER/.mozilla/firefox"
+
     local reProfile="Path=([a-z0-9\.]+)"
-    if [[ $(cat "$FFDIR/profiles.ini") =~ $reProfile ]]; then
+    if [[ $1 -eq "backup" ]] && [[ $(cat "$ffDir/profiles.ini") =~ $reProfile ]]; then
         echo "Backing up firefox..."
 
         local pDir="${BASH_REMATCH[1]}"
 
-        mkdir -p "$FFBAK"
-        cp -a "$FFDIR/$pDir" "$FFBAK/"
+        mkdir -p "$backupDir"
+        cp -a "$ffDir/$pDir" "$backupDir/"
     fi
 }
 
-mpv_backup() {
-    if [[ -f "$MPVDIR/mpv.conf" ]]; then
+mpv() {
+    local backupDir="$BACKUPDIR/mpv"
+    local mpvDir="/home/$USER/.config/mpv"
+
+    if [[ $1 -eq "backup" ]] && [[ -f "$mpvDir/mpv.conf" ]]; then
         echo "Backing up mpv..."
 
-        mkdir -p "$MPVBAK"
-        cp "$MPVDIR/mpv.conf" "$MPVBAK/"
-    fi
-}
-
-mpv_restore() {
-    if [[ -d "$MPVBAK" ]] && [[ $(command -v "mpv") ]]; then
+        mkdir -p "$backupDir"
+        cp "$mpvDir/mpv.conf" "$backupDir/"
+    elif [[ $1 -eq "restore" ]] && [[ -d "$backupDir" ]] && [[ $(command -v "mpv") ]]; then
         echo "Restoring mpv..."
 
-        mkdir -p "$MPVDIR"
-        cp -f "$MPVBAK/mpv.conf" "$MPVDIR/"
+        mkdir -p "$mpvDir"
+        cp -f "$backupDir/mpv.conf" "$mpvDir/"
     fi
 }
+
+gnome_podcasts() {
+    local backupDir="$BACKUPDIR/gnome-podcasts"
+    local gpDir="/home/$USER/.var/app/org.gnome.Podcasts/data/gnome-podcasts"
+
+    if [[ $1 -eq "backup" ]] && [[ -f "$gpDir/podcasts.db" ]]; then
+        echo "Backing up gnome-podcasts..."
+
+        mkdir -p "$backupDir"
+        cp "$gpDir/podcasts.db" "$backupDir"
+    elif [[ $1 -eq "restore" ]] && [[ $(flatpak list | grep org.gnome.Podcasts) ]]; then
+        echo "Restoring gnome-podcasts..."
+
+        mkdir -p "$gpDir"
+        cp -f "$backupDir/podcasts.db" "$gpDir/"
+    fi
+}
+
+retroarch() {
+    local backupDir="$BACKUPDIR/retroarch"
+    local raDir="/home/$USER/.var/app/org.libretro.RetroArch/config"
+
+    if [[ $1 -eq "backup" ]] && [[ -d "$raDir" ]]; then
+        echo "Backing up retroarch..."
+
+        mkdir -p "$backupDir"
+        cp -a "$raDir" "$backupDir/"
+    elif [[ $1 -eq "restore" ]] && [[ $(flatpak list | grep org.libretro.RetroArch) ]]; then
+        echo "Restoring retroarch..."
+
+        mkdir -p "$raDir"
+        cp -rf $backupDir/. "$raDir/"
+    fi
+}
+
+declare -a FUNCS=(
+    "vscode"
+    "gnome"
+    "ssh"
+    "lutris"
+    "qbittorent"
+    "keepassxc"
+    "firefox"
+    "mpv"
+    "gnome_podcasts"
+    "retroarch"
+)
 
 case "$1" in
     "backup")
         rm -rf "$BACKUPDIR"
 
-        vscode_backup
-        gnome_backup
-        ssh_backup
-        lutris_backup
-        qbittorent_backup
-        keepassxc_backup
-        firefox_backup
-        mpv_backup
+        for fn in "${FUNCS[@]}"; do $fn $1; done
 
         echo "Compressing..."
-        tar zcf "$BACKUPDIR.tar.gz" "$BACKUPDIR"
+        tar cf - "$BACKUPDIR" | 7za a -si -txz -mx=9 "$BACKUPDIR.tar.xz"
         rm -rf "$BACKUPDIR"
         ;;
     "restore")
-        if [[ ! -f "$BACKUPDIR.tar.gz" ]]; then
-            echo "Error: no $BACKUPDIR.tar.gz found"
+        if [[ ! -f "$BACKUPDIR.tar.xz" ]]; then
+            echo "Error: no $BACKUPDIR.tar.xz found"
             exit 1
         fi
 
         echo "Uncompressing..."
-        tar zxf "$BACKUPDIR.tar.gz"
+        tar xf "$BACKUPDIR.tar.xz"
 
-        vscode_restore
-        ssh_restore
-        lutris_restore
-        qbittorrent_restore
-        keepassxc_restore
-        mpv_restore
+        for fn in "${FUNCS[@]}"; do $fn $1; done
         ;;
     *)
         echo "Usage: $0 {backup|restore}"

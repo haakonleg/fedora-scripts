@@ -147,11 +147,10 @@ pulseaudio() {
         sudo -u $ORIGUSER touch $PAFILE
 
         declare -a PAOPTS=(
-            'resample-method = soxr-vhq'
+            'resample-method = speex-float-10'
             'avoid-resampling = true'
             'flat-volumes = no'
             'default-sample-format = s16le'
-            'alternate-sample-rate = 48000'
         )
 
         printf "%s\n" "${PAOPTS[@]}" > $PAFILE
